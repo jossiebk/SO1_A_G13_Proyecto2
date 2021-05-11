@@ -1,25 +1,34 @@
+// Package main implements a server for Greeter service.
 package main
 
 import (
-	"context"
 	"log"
 	"net"
-	"bytes"
-	"io/ioutil"
-	"net/http"
+	"fmt"
+	"time"
+	"context"
+	"encoding/json"
 
 	"google.golang.org/grpc"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/gomodule/redigo/redis"
 )
 
 const (
-	port = ":4000"
+	port = ":8081"
 )
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
+//Struct to save into Mongodb
+type Request struct {
+  Name string `redis:"name"`
+	Location string `redis:"location"`
+	Age int `redis:"age"`
+	InfectedType string `json:"infected_type"`
+	State string `redis:"state"`
 }
 
 // server is used to implement helloworld.GreeterServer.
@@ -28,28 +37,64 @@ type server struct {
 }
 
 // SayHello implements helloworld.GreeterServer
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	log.Printf("Received: %v", in.GetName())
+func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	//JSON string (it comes from client)
+	jsonString := in.GetName()
+	
+	//Print received data from the client
+	log.Printf("Data received: %v", jsonString)
 
-	postBody := []byte(string(in.GetName()))
-	log.Printf("Response : llego al server")
-	req, err := http.Post("http:// 34.69.47.240:80", "application/json", bytes.NewBuffer(postBody))
-	req.Header.Set("Content-Type", "application/json")
-	failOnError(err, "POST new document")
-	defer req.Body.Close()
-	log.Printf("Response : envio datos")
+	//Connection with Mongodb Atlas
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://jossie:jossiealgo@cluster0.jimbn.mongodb.net/testdb?retryWrites=true&w=majority"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(ctx)
 
-	//Read the response body
-	newBody, err := ioutil.ReadAll(req.Body)
-	failOnError(err, "Reading response from HTTP POST")
-	sb := string(newBody)
-	log.Printf(sb)
+	//Accessing the collection inside the database
+	collection := client.Database("testdb").Collection("covid")
 
-	return &pb.HelloReply{Message: sb}, nil
+	//Parsing JSON string to Struct
+	var req Request	
+	json.Unmarshal([]byte(jsonString), &req)
+
+	//Checking valid struct
+	if (Request{} != req) {
+		//Inserting into Mongodb 
+		insertResult, err := collection.InsertOne(context.TODO(), req)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Inserted data in mongo with ID:", insertResult.InsertedID)
+
+		//Inserting into redis
+		c, err := redis.Dial("tcp", "34.74.89.82:6379")
+		if err != nil {
+			log.Println("No se pudo conectar a redis desde GRPC", err)
+		} else {
+			//Struct to jsonstring just to ensure a good format
+			b, err := json.Marshal(req)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			//Inserting object
+			if _, err := c.Do("LPUSH", "lista", string(b)); err != nil {
+				fmt.Println("Error insertando objeto en redis: ",err)
+			}
+		}
+	} 
+
+	//Return something to the client
+	return &pb.HelloReply{Message: "Hello " + jsonString}, nil
 }
 
 func main() {
-	log.Printf("SERVIDOR GRPC ACTIVO PUERTO 4000")
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -59,5 +104,4 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-	
 }

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	address = "grpc-server:4000"
+	address = "127.0.0.1:8081"
 )
 
 func failOnError(err error, msg string) {
