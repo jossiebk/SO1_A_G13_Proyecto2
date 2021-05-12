@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/gomodule/redigo/redis"
+	
 )
 
 const (
@@ -44,8 +45,10 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 	//Print received data from the client
 	log.Printf("Data received: %v", jsonString)
 
-	//Connection with Mongodb Atlas
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://jossie:jossiealgo@cluster0.jimbn.mongodb.net/testdb?retryWrites=true&w=majority"))
+	//Connection with Mongodb directly
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://34.75.249.164:27017").SetAuth(options.Credential{
+		AuthSource: "testdb", Username: "jossie", Password: "grupoalgo",
+	}))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +76,9 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 		fmt.Println("Inserted data in mongo with ID:", insertResult.InsertedID)
 
 		//Inserting into redis
-		c, err := redis.Dial("tcp", "34.74.89.82:6379")
+		log.Println("EMPIEZA REDIS")
+		c, err := redis.Dial("tcp", "35.237.7.58:6379")
+		log.Println("SI SE CONECTA",err)
 		if err != nil {
 			log.Println("No se pudo conectar a redis desde GRPC", err)
 		} else {
