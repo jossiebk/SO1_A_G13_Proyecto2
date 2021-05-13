@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -52,6 +54,12 @@ func main() {
 		}
 
 		fmt.Println(u)
+
+		//conexión con MOngo DB
+		postBody := []byte(u.String())
+		fmt.Println("Response: enviando a Mongo DB")
+		http.Post("http://35.229.87.37:27017", "application/json", bytes.NewBuffer(postBody))
+		fmt.Println("Response : datos fueron enviados")
 	}
 }
 
@@ -61,7 +69,7 @@ func (u *msg_COVID) MarshalBinary() ([]byte, error) {
 	return json.Marshal(u)
 }
 
-// UnmarshalBinary decodes the struct into a User
+// UnmarshalBinary decodes the struct into a msgCovid
 func (u *msg_COVID) UnmarshalBinary(data []byte) error {
 	if err := json.Unmarshal(data, u); err != nil {
 		return err
@@ -70,5 +78,5 @@ func (u *msg_COVID) UnmarshalBinary(data []byte) error {
 }
 
 func (u *msg_COVID) String() string {
-	return "Name: " + u.Name + ", Location: " + u.Location + ", Age: " + strconv.Itoa(u.Age) + ", InfectedType: " + u.Infectedtype + " State: " + u.State + " CAMINO: " + u.CAMINO
+	return "{Name:" + u.Name + ", Location: " + u.Location + ", Age: " + strconv.Itoa(u.Age) + ", InfectedType: " + u.Infectedtype + ", State: " + u.State + ", CAMINO:" + u.CAMINO + "}"
 }
