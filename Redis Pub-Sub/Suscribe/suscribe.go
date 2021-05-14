@@ -1,15 +1,16 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"log"
 	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // msg_COVID is a struct representing newly registered information
@@ -56,10 +57,46 @@ func main() {
 		fmt.Println(u)
 
 		//conexión con MOngo DB
-		postBody := []byte(u.String())
-		fmt.Println("Response: enviando a Mongo DB")
-		http.Post("http://35.229.87.37:27017", "application/json", bytes.NewBuffer(postBody))
-		fmt.Println("Response : datos fueron enviados")
+		insert_mongo(u.String())
+		// postBody := []byte(u.String())
+		// fmt.Println("Response: enviando a Mongo DB")
+		// http.Post("http://35.229.87.37:27017", "application/json", bytes.NewBuffer(postBody))
+		// fmt.Println("Response : datos fueron enviados")
+
+	}
+}
+
+func insert_mongo(jsonString string) {
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://35.229.87.37:27017").SetAuth(options.Credential{
+		AuthSource: "testdb", Username: "jossie", Password: "grupoalgo",
+	}))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(ctx)
+
+	//Accessing the collection inside the database
+	collection := client.Database("testdb").Collection("covid")
+
+	//Parsing JSON string to Struct
+	var req msg_COVID
+	json.Unmarshal([]byte(jsonString), &req)
+
+	//Checking valid struct
+	if (msg_COVID{} != req) {
+		//Inserting into Mongodb
+		insertResult, err := collection.InsertOne(context.TODO(), req)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Inserted post with ID:", insertResult.InsertedID)
 	}
 }
 

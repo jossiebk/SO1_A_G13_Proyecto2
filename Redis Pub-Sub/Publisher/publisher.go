@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -50,7 +52,37 @@ var States []string = []string{"symptomatic", "asymptomatic"}
 
 var Paths = "Redis Pub/Sub"
 
-func main() {
+func Server(wr http.ResponseWriter, req *http.Request) {
+
+	switch req.Method {
+	case "POST":
+		var json_covid msg_COVID
+
+		//route := "Google pub/sub"
+		decoder := json.NewDecoder(req.Body)
+		_error := decoder.Decode(&json_covid)
+
+		if _error != nil {
+			fmt.Println("Error al recibir cadena: %v", _error)
+		}
+
+		message, _error := json.Marshal(msg_COVID{Name: json_covid.Name, Location: json_covid.Location, Age: json_covid.Age, Infectedtype: json_covid.Infectedtype, State: json_covid.State, CAMINO: "PUBSUB"})
+
+		if _error != nil {
+			fmt.Fprintf(wr, "Error en parser: %v", _error)
+			return
+		}
+
+		fmt.Println(string(message))
+		publish(string(message))
+
+	default:
+		fmt.Println(wr, "Ruta %s no validada", req.Method)
+		return
+	}
+}
+
+func publish(msg string) {
 	// Create a new Redis Client
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     "35.196.165.91:6379", // We connect to host redis, thats what the hostname of the redis service is set to in the docker-compose
@@ -72,7 +104,7 @@ func main() {
 	// Loop and randomly generate users on a random timer
 	for {
 		// Publish a generated user to the new_users channel
-		err := redisClient.Publish(ctx, "new_msg", GenerateRandomUser()).Err()
+		err := redisClient.Publish(ctx, "new_msg", msg).Err()
 		if err != nil {
 			panic(err)
 		}
@@ -81,7 +113,18 @@ func main() {
 		n := rand.Intn(4)
 		time.Sleep(time.Duration(n) * time.Second)
 	}
+}
 
+func main() {
+	fmt.Println("Iniciando ...")
+	fmt.Println("..")
+	fmt.Println(".")
+	http.HandleFunc("/", Server)
+	puerto := ":80"
+	_error := http.ListenAndServe(puerto, nil)
+	if _error != nil {
+		fmt.Println("Error en el WebService: %v", _error)
+	}
 }
 
 // GenerateRandomUser creates a random user, dont care too much about this.
