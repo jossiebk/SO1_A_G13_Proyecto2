@@ -17,6 +17,7 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	
+	
 )
 
 const (
@@ -46,7 +47,7 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 	log.Printf("Data received: %v", jsonString)
 
 	//Connection with Mongodb directly
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://34.75.249.164:27017").SetAuth(options.Credential{
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://35.229.87.37:27017").SetAuth(options.Credential{
 		AuthSource: "testdb", Username: "jossie", Password: "grupoalgo",
 	}))
 	if err != nil {
@@ -77,7 +78,7 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 
 		//Inserting into redis
 		log.Println("EMPIEZA REDIS")
-		c, err := redis.Dial("tcp", "35.237.7.58:6379")
+		c, err := redis.Dial("tcp", "35.196.165.91:6379")
 		log.Println("SI SE CONECTA",err)
 		if err != nil {
 			log.Println("No se pudo conectar a redis desde GRPC", err)
@@ -87,7 +88,6 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 			if err != nil {
 				fmt.Println(err)
 			}
-
 			//Inserting object
 			if _, err := c.Do("LPUSH", "lista", string(b)); err != nil {
 				fmt.Println("Error insertando objeto en redis: ",err)
@@ -96,10 +96,13 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 	} 
 
 	//Return something to the client
+	log.Println("PASA 7 RETORNO",jsonString)
 	return &pb.HelloReply{Message: "Hello " + jsonString}, nil
+	
 }
 
 func main() {
+	log.Printf("SERVIDOR GRPC ACTIVO PUERTO 8081")
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
