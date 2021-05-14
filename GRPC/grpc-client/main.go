@@ -51,7 +51,8 @@ func newElement(w http.ResponseWriter, r *http.Request) {
 
 	// Sending data
 	re, err := cli.SayHello(ctx, &pb.HelloRequest{Name: string(data)})
-	failOnError(err, "Error al enviar el mensaje")
+
+	//failOnError(err, "Error al enviar el mensaje:")
 	log.Print("Sent:")
 	log.Printf("Response : %s", re.GetMessage())
 
@@ -61,7 +62,7 @@ func newElement(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleRequests() {
-	log.Printf("CLIENTE GRPC ACTIVO PUERTO 81:3000")
+	log.Printf("CLIENTE GRPC ACTIVO PUERTO 3000")
 	http.HandleFunc("/", newElement)
 	log.Fatal(http.ListenAndServe(":3000", nil))
 }
