@@ -1,0 +1,15 @@
+version: "3.4"
+
+services:
+
+  redis_publisher:
+      container_name: publisher_redis
+      build: ./Publisher
+      ports:
+        - "80:80"
+
+  redis_suscribe:
+      container_name: suscribe_redis
+      build: ./Suscribe
+      depends_on: 
+        - redis_publisher
