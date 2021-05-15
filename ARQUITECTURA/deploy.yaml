@@ -2,45 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: dummy
-  name: dummy
-  namespace: chaos-testing
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: dummy
-  template:
-    metadata:
-      labels:
-        app: dummy
-      annotations:
-        linkerd.io/inject: enabled
-    spec:
-      containers:
-      - image: czdev/blue
-        name: dummy
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: dummy
-  name: dummy
-  namespace: chaos-testing
-spec:
-  ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    app: dummy
-  type: LoadBalancer
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
     app: grpc-server
   name: grpc-server
   namespace: chaos-testing
