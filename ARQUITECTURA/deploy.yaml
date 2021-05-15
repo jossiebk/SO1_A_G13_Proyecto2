@@ -1,0 +1,176 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dummy
+  name: dummy
+  namespace: chaos-testing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dummy
+  template:
+    metadata:
+      labels:
+        app: dummy
+      annotations:
+        linkerd.io/inject: enabled
+    spec:
+      containers:
+      - image: czdev/blue
+        name: dummy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dummy
+  name: dummy
+  namespace: chaos-testing
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: dummy
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grpc-server
+  name: grpc-server
+  namespace: chaos-testing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grpc-server
+  template:
+    metadata:
+      labels:
+        app: grpc-server
+      annotations:
+        linkerd.io/inject: enabled
+    spec:
+      containers:
+      - image: jossie/grpc-server
+        name: grpc-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grpc-server
+  name: grpc-server
+  namespace: chaos-testing
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: grpc-server
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grpc-client
+  name: grpc-client
+  namespace: chaos-testing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grpc-client
+  template:
+    metadata:
+      labels:
+        app: grpc-client
+      annotations:
+        linkerd.io/inject: enabled
+    spec:
+      containers:
+      - image: jossie/grpc-client
+        name: grpc-client
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grpc-client
+  name: grpc-client
+  namespace: chaos-testing
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: grpc-client
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: error-injector
+  namespace: chaos-testing
+data:
+ nginx.conf: |-
+    events {}
+    http {
+        server {
+          listen 80;
+            location / {
+                return 500;
+            }
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: error-injector
+  namespace: chaos-testing
+  labels:
+    app: error-injector
+spec:
+  selector:
+    matchLabels:
+      app: error-injector
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: error-injector
+      annotations:
+        linkerd.io/inject: enabled
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: error-injector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: error-injector
+  namespace: chaos-testing
+spec:
+  ports:
+  - name: service
+    port: 80
+  selector:
+    app: error-injector

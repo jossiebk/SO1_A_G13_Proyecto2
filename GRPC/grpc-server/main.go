@@ -17,7 +17,6 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	
-	
 )
 
 const (
@@ -88,6 +87,7 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 			if err != nil {
 				fmt.Println(err)
 			}
+
 			//Inserting object
 			if _, err := c.Do("LPUSH", "lista", string(b)); err != nil {
 				fmt.Println("Error insertando objeto en redis: ",err)
@@ -96,13 +96,10 @@ func (s *server) SayHello(ctxt context.Context, in *pb.HelloRequest) (*pb.HelloR
 	} 
 
 	//Return something to the client
-	log.Println("PASA 7 RETORNO",jsonString)
 	return &pb.HelloReply{Message: "Hello " + jsonString}, nil
-	
 }
 
 func main() {
-	log.Printf("SERVIDOR GRPC ACTIVO PUERTO 8081")
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
