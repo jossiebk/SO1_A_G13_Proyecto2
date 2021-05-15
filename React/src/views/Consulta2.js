@@ -30,41 +30,35 @@ import BootstrapTable from 'react-bootstrap-table-next';
 ];
 
 
-class Consulta1 extends Component {
+class Consulta2 extends Component {
     constructor(){
-        super();
-        this.state = {
-          archivo: [],
-          paraTabla: []
-        };
-      } 
+      super();
+      this.state = {
+        archivo: [],
+        paraTabla: [],
+        datos: []
+      };
+    } 
 
     componentDidMount() {
-        fetch("http://127.0.0.1:7000/data")
-          .then((response) => response.json())
-          .then((datos) => {
-            console.log(datos);
-            this.setState({archivo:datos});
-          })
-        const { archivo } = this.state;
-        console.log(archivo);
+      fetch("http://127.0.0.1:7000/data")
+      .then((response) => response.json())
+      .then((res) => this.setState({ datos : res}));
     }
 
 
 
-
-
     render(){
-        const { archivo } = this.state;
-        console.log(archivo);
+      const { datos } = this.state;
+      console.log(datos);
         return (
             <div className="App">
             <h1>Los diez países más vacunados, en Redis.</h1>
-            <BootstrapTable keyField='id' data={ archivo.reverse() } columns={ columns } />
+            <BootstrapTable keyField='id' data={ datos.reverse() } columns={ columns } />
             </div>
         );
     }
 }
 
 
-export default Consulta1;
+export default Consulta2;

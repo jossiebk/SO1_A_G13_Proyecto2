@@ -30,7 +30,7 @@ import BootstrapTable from 'react-bootstrap-table-next';
 ];
 
 
-class Consulta1 extends Component {
+class Consulta7 extends Component {
     constructor(){
         super();
         this.state = {
@@ -59,7 +59,7 @@ class Consulta1 extends Component {
         console.log(archivo);
         return (
             <div className="App">
-            <h1>Todos los datos</h1>
+            <h1>Mapa interactivo que muestre estos reportes.</h1>
             <BootstrapTable keyField='id' data={ archivo.reverse() } columns={ columns } />
             </div>
         );
@@ -67,4 +67,4 @@ class Consulta1 extends Component {
 }
 
 
-export default Consulta1;
+export default Consulta7;
