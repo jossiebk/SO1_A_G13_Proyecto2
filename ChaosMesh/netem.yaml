@@ -10,7 +10,7 @@ spec:
     namespaces:
       - chaos-testing
     labelSelectors:
-      'app': 'apache'
+      'app': 'grpc-client'
   loss:
     loss: "30"
     correlation: "30"

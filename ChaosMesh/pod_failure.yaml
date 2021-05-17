@@ -10,6 +10,6 @@ spec:
   duration: '15s'
   selector:
     labelSelectors:
-      'app': 'apache'
+      'app': 'grpc-client'
   scheduler:
     cron: '@every 10s'

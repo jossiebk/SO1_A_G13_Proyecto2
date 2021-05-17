@@ -1,12 +1,12 @@
 apiVersion: split.smi-spec.io/v1alpha1
 kind: TrafficSplit
 metadata:
-  name: error-split
+  name: splitting
   namespace: chaos-testing
 spec:
-  service: apache
+  service: dummy
   backends:
-  - service: apache
+  - service: grpc-client
     weight: 900m
   - service: error-injector
     weight: 100m

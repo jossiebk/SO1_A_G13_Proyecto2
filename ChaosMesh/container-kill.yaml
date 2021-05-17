@@ -6,9 +6,9 @@ metadata:
 spec:
   action: container-kill
   mode: one
-  containerName: 'apache'
+  containerName: 'grpc-client'
   selector:
     labelSelectors:
-      'apache'
+      'grpc-client'
   scheduler:
     cron: '@every 30s'
