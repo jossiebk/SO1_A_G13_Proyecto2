@@ -10,6 +10,6 @@ spec:
     namespaces:
       - chaos-testing
     labelSelectors:
-      'app': 'apache'
+      'app': 'grpc-client'
   scheduler:
     cron: '@every 3s'
